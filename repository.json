@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "repositoryId": "ney-sources",
+  "name": "Ney-sources",
+  "enabled": true,
+  "publishedAtMs": 1789903651759,
+  "modules": [
+    {
+      "id": "senpai-stream",
+      "moduleId": "senpai-stream",
+      "name": "Senpai Stream",
+      "moduleFamilyId": "senpai_stream",
+      "moduleIdentity": "SP-VID-SENPAI-STREAM",
+      "moduleIdentityNumber": 1,
+      "contentType": "video",
+      "contractVersion": 3,
+      "releaseTrack": "stable",
+      "version": "1.0.0",
+      "language": "fr",
+      "packageUrl": "senpai-stream.zip",
+      "packagePath": "senpai-stream.zip",
+      "sha256": "acf9ffe2520db4c7ef5660744105f1706796c375adaf96043fa837c458a6dc4d",
+      "manifestUrl": "senpai-stream/module.json",
+      "manifestPath": "senpai-stream/module.json",
+      "icon": "https://senpai-stream.space/static/img/logo-1758745578.svg",
+      "publishedAtMs": 1789903651759,
+      "changelog": [
+        "1.0.0: initial release. Search, details and episode listings via public HTML; direct streams only returned after live media verification, with no CAPTCHA, ad-wall, login or DRM bypass."
+      ],
+      "presentation": {
+        "category": "Movies & TV",
+        "purpose": "French films, series and anime",
+        "language": "French (VF / VOSTFR)",
+        "languages": [
+          "vf",
+          "vostfr"
+        ],
+        "iconUrl": "https://senpai-stream.space/static/img/logo-1758745578.svg"
+      }
+    }
+  ]
+}
