@@ -1,0 +1,29 @@
+{
+  "id": "senpai-stream",
+  "name": "Senpai Stream",
+  "contentType": "video",
+  "contractVersion": 3,
+  "releaseTrack": "stable",
+  "moduleVersion": "1.0.0",
+  "moduleFamilyId": "senpai_stream",
+  "moduleIdentity": "SP-VID-SENPAI-STREAM",
+  "moduleIdentityNumber": 1,
+  "description": "Video module for https://senpai-stream.space (films, series, animes). Search, details and episodes via public HTML; streams resolved dynamically without bypassing CAPTCHA/ad-wall/login.",
+  "language": "fr",
+  "config": {
+    "baseUrl": "https://senpai-stream.space",
+    "runtime": {
+      "entry": "index.js",
+      "mode": "local"
+    },
+    "caps": {
+      "homeMaxResults": 30,
+      "maxResponseBytes": 524288,
+      "timeoutMs": 15000,
+      "maxConcurrentRequests": 4
+    },
+    "capabilities": {
+      "discovery_v1": true
+    }
+  }
+}
