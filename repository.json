@@ -10,13 +10,17 @@
       "version": "1.0.0",
       "author": "ney73",
       "description": "Video module for https://senpai-stream.space (films, series, animes). Search, details and episodes via public HTML; streams resolved dynamically without bypassing CAPTCHA/ad-wall/login.",
-      "icon": "https://senpai-stream.space/static/img/logo-1758745578.svg",
+      "icon": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.svg",
+      "iconUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.svg",
       "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream.zip",
       "manifestUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/module.json",
       "manifest": {
         "url": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/module.json",
         "path": "senpai-stream/module.json",
         "entry": "index.js"
+      },
+      "capabilities": {
+        "discovery_v1": true
       },
       "contentType": "video",
       "language": "fr",
@@ -28,7 +32,7 @@
         "category": "Movies & TV",
         "purpose": "French films, series and anime",
         "language": "French (VF / VOSTFR)",
-        "iconUrl": "https://senpai-stream.space/static/img/logo-1758745578.svg"
+        "iconUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.svg"
       }
     }
   ]
