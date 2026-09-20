@@ -5,6 +5,7 @@
   "contractVersion": 3,
   "releaseTrack": "stable",
   "moduleVersion": "1.0.0",
+  "version": "1.0.0",
   "versionCode": 1,
   "moduleFamilyId": "senpai_stream",
   "moduleIdentity": "SP-VID-SENPAI-STREAM",

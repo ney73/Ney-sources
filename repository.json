@@ -1,46 +1,23 @@
 {
-  "id": "ney-sources",
-  "name": "Ney-sources",
-  "version": "1.0.0",
   "schemaVersion": 1,
-  "description": "Synthetiq Player module repository hosting the Senpai Stream video module.",
+  "name": "Ney Sources",
+  "id": "ney-sources",
+  "description": "Custom sources repository for Synthetiq Player",
   "modules": [
     {
       "id": "senpai-stream",
       "name": "Senpai Stream",
       "version": "1.0.0",
       "versionCode": 1,
+      "minAppVersion": "1.0.0",
       "author": "ney73",
-      "description": "Video module for https://senpai-stream.space (films, series, animes). Search, details and episodes via public HTML; streams resolved dynamically without bypassing CAPTCHA/ad-wall/login.",
-      "contentType": "video",
-      "contractVersion": 3,
-      "releaseTrack": "stable",
-      "moduleFamilyId": "senpai_stream",
-      "moduleIdentity": "SP-VID-SENPAI-STREAM",
-      "moduleIdentityNumber": 1,
-      "icon": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.svg",
-      "iconUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.svg",
+      "description": "Senpai Stream video source module",
+      "type": "video",
+      "icon": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.png",
       "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream.zip",
       "manifestUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/module.json",
-      "manifest": {
-        "url": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/module.json",
-        "path": "senpai-stream/module.json",
-        "entry": "index.js"
-      },
       "capabilities": {
-        "discovery_v1": true
-      },
-      "contentType": "video",
-      "language": "fr",
-      "sha256": "acf9ffe2520db4c7ef5660744105f1706796c375adaf96043fa837c458a6dc4d",
-      "changelog": [
-        "1.0.0: initial release. Search, details and episode listings via public HTML; direct streams only returned after live media verification, with no CAPTCHA, ad-wall, login or DRM bypass."
-      ],
-      "presentation": {
-        "category": "Movies & TV",
-        "purpose": "French films, series and anime",
-        "language": "French (VF / VOSTFR)",
-        "iconUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/icon.svg"
+        "discovery_v1": false
       }
     }
   ]
