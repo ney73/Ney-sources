@@ -342,15 +342,29 @@ function normalizeId(id) {
 
 globalThis.searchResults = async function (query) {
   try {
-    var q = String(query == null ? '' : query).trim();
+    /* Site search is a GET route: /search/{query} (path segment, NOT a
+     * query-string like ?s= — those return the homepage; /search?q= and
+     * /api/search are 404; there is no JSON API and no auth/POST needed). */
+    var q = String(query == null ? '' : query).trim().replace(/\s+/g, ' ');
     if (!q) return [];
     var url = BASE_URL + '/search/' + encodeURIComponent(q);
-    var html = await fetchHtml(url);
+    var html = null;
+    var lastErr = null;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        html = await fetchHtml(url);
+        lastErr = null;
+        break;
+      } catch (e) {
+        /* Transient client failure (e.g. HTTP_0): retry once. */
+        lastErr = e;
+      }
+    }
+    if (html == null) return [];
     var items = parseCards(html);
     return items || [];
   } catch (e) {
-    /* Never throw unhandled: non-200 routes, blocked clients (HTTP_0) or
-     * parse failures degrade gracefully to an empty result list. */
+    /* Never throw unhandled: degrade gracefully to an empty result list. */
     return [];
   }
 };
