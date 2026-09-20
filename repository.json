@@ -7,8 +7,8 @@
     {
       "id": "senpai-stream",
       "name": "Senpai Stream",
-      "version": "1.0.2",
-      "versionCode": 3,
+      "version": "1.0.3",
+      "versionCode": 4,
       "minAppVersion": "1.0.0",
       "author": "ney73",
       "description": "Senpai Stream video source module",
@@ -20,6 +20,7 @@
         "discovery_v1": false
       },
       "changelog": [
+        "1.0.3: every network call in search/details/episodes/home wrapped silent-try/catch (HTTP_0 safe); base URL verified header/slash-insensitive.",
         "1.0.2: added getHome alias, full-outage [] fallbacks for home/search/discovery, browser headers on every fetchv2 call.",
         "1.0.1: hardened searchResults (correct /search/{query} route, browser headers, one retry on transient failure, graceful [] fallback).",
         "1.0.0: initial release. Search, details and episode listings via public HTML; direct streams only returned after live media verification, with no CAPTCHA, ad-wall, login or DRM bypass."

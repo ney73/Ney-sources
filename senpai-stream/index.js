@@ -370,40 +370,51 @@ globalThis.searchResults = async function (query) {
 };
 
 globalThis.extractDetails = async function (id) {
-  var url = normalizeId(id);
-  if (url.indexOf('http') !== 0) {
-    /* Bare slug: probe the three detail routes in order. */
-    var probes = [BASE_URL + '/anime/' + url, BASE_URL + '/tv-show/' + url, BASE_URL + '/movie/' + url];
-    var lastErr = null;
-    for (var i = 0; i < probes.length; i++) {
-      try {
-        var h = await fetchHtml(probes[i]);
-        return parseDetails(h, probes[i]);
-      } catch (e) { lastErr = e; }
+  try {
+    var url = normalizeId(id);
+    if (url.indexOf('http') !== 0) {
+      /* Bare slug: probe the three detail routes in order. */
+      var probes = [BASE_URL + '/anime/' + url, BASE_URL + '/tv-show/' + url, BASE_URL + '/movie/' + url];
+      for (var i = 0; i < probes.length; i++) {
+        try {
+          var h = await fetchHtml(probes[i]);
+          return parseDetails(h, probes[i]);
+        } catch (e) { /* try next route shape */ }
+      }
+      return [];
     }
-    throw lastErr || new Error('NOT_FOUND: ' + id);
+    var html = await fetchHtml(url);
+    return parseDetails(html, url);
+  } catch (e) {
+    /* Network failure (e.g. HTTP_0) or unparseable page: fail silent. */
+    return [];
   }
-  var html = await fetchHtml(url);
-  return parseDetails(html, url);
 };
 
 globalThis.extractEpisodes = async function (id) {
-  var url = normalizeId(id);
-  if (/\/episode\//.test(url)) {
-    /* An episode URL was given: list siblings from its own page. */
-    var h = await fetchHtml(url);
-    var eps = parseEpisodes(h, url);
-    if (eps.length) return eps;
-    return [{ id: url, url: url, href: url, title: 'Episode', name: 'Episode', season: null, episode: 1, number: 1, show: url }];
+  try {
+    var url = normalizeId(id);
+    if (/\/episode\//.test(url)) {
+      /* An episode URL was given: list siblings from its own page. */
+      try {
+        var h = await fetchHtml(url);
+        var eps = parseEpisodes(h, url);
+        if (eps.length) return eps;
+      } catch (e) { /* fall through to single-entry fallback below */ }
+      return [{ id: url, url: url, href: url, title: 'Episode', name: 'Episode', season: null, episode: 1, number: 1, show: url }];
+    }
+    var html = await fetchHtml(url);
+    var episodes = parseEpisodes(html, url);
+    if (episodes.length) return episodes;
+    if (/^\/(movie)\//.test(url.replace(BASE_URL, '')) || detailKind(url) === 'movie') {
+      var d = parseDetails(html, url);
+      return [{ id: url, url: url, href: url, title: d.title || 'Film', name: d.title || 'Film', season: null, episode: 1, number: 1, show: url }];
+    }
+    return [];
+  } catch (e) {
+    /* Network failure (e.g. HTTP_0): fail silent with an empty list. */
+    return [];
   }
-  var html = await fetchHtml(url);
-  var episodes = parseEpisodes(html, url);
-  if (episodes.length) return episodes;
-  if (/^\/(movie)\//.test(url.replace(BASE_URL, '')) || detailKind(url) === 'movie') {
-    var d = parseDetails(html, url);
-    return [{ id: url, url: url, href: url, title: d.title || 'Film', name: d.title || 'Film', season: null, episode: 1, number: 1, show: url }];
-  }
-  return [];
 };
 
 globalThis.extractStreamUrl = async function (episodeHref, lang) {
