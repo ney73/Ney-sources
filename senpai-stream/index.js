@@ -21,7 +21,7 @@
 var BASE_URL = 'https://senpai-stream.space';
 var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 var DEFAULT_HEADERS = { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7', Referer: BASE_URL + '/' };
-var MEDIA_HEADERS = { 'User-Agent': UA, Referer: BASE_URL + '/', Origin: BASE_URL };
+var MEDIA_HEADERS = { 'User-Agent': UA, Accept: '*/*', 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7', Referer: BASE_URL + '/', Origin: BASE_URL };
 
 function httpFetch(url, options) {
   if (typeof fetchv2 !== 'undefined' && fetchv2) return fetchv2(url, options || {});
@@ -474,18 +474,54 @@ var DISCOVERY_SECTIONS = [
 ];
 
 globalThis.discoveryHome = async function () {
-  var sections = [];
-  for (var i = 0; i < DISCOVERY_SECTIONS.length; i++) {
-    var s = DISCOVERY_SECTIONS[i];
-    try {
-      var html = await fetchHtml(s.url);
-      var items = parseCards(html).slice(0, 30);
-      sections.push({ id: s.id, title: s.title, items: items });
-    } catch (e) {
-      sections.push({ id: s.id, title: s.title, items: [], error: e && e.message ? e.message : String(e) });
+  try {
+    var sections = [];
+    for (var i = 0; i < DISCOVERY_SECTIONS.length; i++) {
+      var s = DISCOVERY_SECTIONS[i];
+      try {
+        var html = await fetchHtml(s.url);
+        var items = parseCards(html).slice(0, 30);
+        sections.push({ id: s.id, title: s.title, items: items });
+      } catch (e) {
+        sections.push({ id: s.id, title: s.title, items: [], error: e && e.message ? e.message : String(e) });
+      }
     }
+    /* Total outage (every section empty, e.g. HTTP_0 client block):
+     * return a bare empty array so the app UI cannot crash. */
+    var anyItems = false;
+    for (var k = 0; k < sections.length; k++) {
+      if (sections[k].items && sections[k].items.length) { anyItems = true; break; }
+    }
+    return anyItems ? sections : [];
+  } catch (e) {
+    return [];
   }
-  return sections;
+};
+
+/* Alias entry point used by some Synthetiq Player home listings.
+ * Returns a flat item array and never throws (empty array on error). */
+globalThis.getHome = async function () {
+  try {
+    var sections = await globalThis.discoveryHome();
+    if (!Array.isArray(sections)) return [];
+    var flat = [];
+    var seen = {};
+    for (var i = 0; i < sections.length; i++) {
+      var items = sections[i] && sections[i].items;
+      if (!Array.isArray(items)) continue;
+      for (var j = 0; j < items.length; j++) {
+        var it = items[j];
+        var key = (it && (it.id || it.url)) || null;
+        if (!key || seen[key]) continue;
+        seen[key] = true;
+        flat.push(it);
+        if (flat.length >= 30) return flat;
+      }
+    }
+    return flat;
+  } catch (e) {
+    return [];
+  }
 };
 
 globalThis.discoveryFeed = async function (sectionId, page) {
@@ -495,10 +531,14 @@ globalThis.discoveryFeed = async function (sectionId, page) {
     if (DISCOVERY_SECTIONS[i].id === id) { target = DISCOVERY_SECTIONS[i]; break; }
   }
   if (!target) target = DISCOVERY_SECTIONS[1];
-  var url = target.url;
-  if (page && Number(page) > 1) {
-    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'page=' + Number(page);
+  try {
+    var url = target.url;
+    if (page && Number(page) > 1) {
+      url += (url.indexOf('?') >= 0 ? '&' : '?') + 'page=' + Number(page);
+    }
+    var html = await fetchHtml(url);
+    return { id: target.id, title: target.title, items: parseCards(html).slice(0, 30) };
+  } catch (e) {
+    return { id: target.id, title: target.title, items: [] };
   }
-  var html = await fetchHtml(url);
-  return { id: target.id, title: target.title, items: parseCards(html).slice(0, 30) };
 };
