@@ -1,29 +1,26 @@
 {
-  "schemaVersion": 1,
-  "repositoryId": "ney-sources",
+  "id": "ney-sources",
   "name": "Ney-sources",
-  "enabled": true,
-  "publishedAtMs": 1789903651759,
+  "version": "1.0.0",
+  "description": "Synthetiq Player module repository hosting the Senpai Stream video module.",
   "modules": [
     {
       "id": "senpai-stream",
-      "moduleId": "senpai-stream",
       "name": "Senpai Stream",
-      "moduleFamilyId": "senpai_stream",
-      "moduleIdentity": "SP-VID-SENPAI-STREAM",
-      "moduleIdentityNumber": 1,
-      "contentType": "video",
-      "contractVersion": 3,
-      "releaseTrack": "stable",
       "version": "1.0.0",
-      "language": "fr",
-      "packageUrl": "senpai-stream.zip",
-      "packagePath": "senpai-stream.zip",
-      "sha256": "acf9ffe2520db4c7ef5660744105f1706796c375adaf96043fa837c458a6dc4d",
-      "manifestUrl": "senpai-stream/module.json",
-      "manifestPath": "senpai-stream/module.json",
+      "author": "ney73",
+      "description": "Video module for https://senpai-stream.space (films, series, animes). Search, details and episodes via public HTML; streams resolved dynamically without bypassing CAPTCHA/ad-wall/login.",
       "icon": "https://senpai-stream.space/static/img/logo-1758745578.svg",
-      "publishedAtMs": 1789903651759,
+      "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream.zip",
+      "manifestUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/module.json",
+      "manifest": {
+        "url": "https://raw.githubusercontent.com/ney73/Ney-sources/main/senpai-stream/module.json",
+        "path": "senpai-stream/module.json",
+        "entry": "index.js"
+      },
+      "contentType": "video",
+      "language": "fr",
+      "sha256": "acf9ffe2520db4c7ef5660744105f1706796c375adaf96043fa837c458a6dc4d",
       "changelog": [
         "1.0.0: initial release. Search, details and episode listings via public HTML; direct streams only returned after live media verification, with no CAPTCHA, ad-wall, login or DRM bypass."
       ],
@@ -31,10 +28,6 @@
         "category": "Movies & TV",
         "purpose": "French films, series and anime",
         "language": "French (VF / VOSTFR)",
-        "languages": [
-          "vf",
-          "vostfr"
-        ],
         "iconUrl": "https://senpai-stream.space/static/img/logo-1758745578.svg"
       }
     }
