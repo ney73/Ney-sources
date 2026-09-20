@@ -20,7 +20,7 @@
 
 var BASE_URL = 'https://senpai-stream.space';
 var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
-var DEFAULT_HEADERS = { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7' };
+var DEFAULT_HEADERS = { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7', Referer: BASE_URL + '/' };
 var MEDIA_HEADERS = { 'User-Agent': UA, Referer: BASE_URL + '/', Origin: BASE_URL };
 
 function httpFetch(url, options) {
@@ -341,11 +341,18 @@ function normalizeId(id) {
 }
 
 globalThis.searchResults = async function (query) {
-  var q = String(query == null ? '' : query).trim();
-  if (!q) return [];
-  var url = BASE_URL + '/search/' + encodeURIComponent(q);
-  var html = await fetchHtml(url);
-  return parseCards(html);
+  try {
+    var q = String(query == null ? '' : query).trim();
+    if (!q) return [];
+    var url = BASE_URL + '/search/' + encodeURIComponent(q);
+    var html = await fetchHtml(url);
+    var items = parseCards(html);
+    return items || [];
+  } catch (e) {
+    /* Never throw unhandled: non-200 routes, blocked clients (HTTP_0) or
+     * parse failures degrade gracefully to an empty result list. */
+    return [];
+  }
 };
 
 globalThis.extractDetails = async function (id) {
