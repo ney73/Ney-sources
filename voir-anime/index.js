@@ -1,39 +1,35 @@
 'use strict';
 
 /* VoirAnime — Synthetiq Player video module (contract v3).
- * Source: https://voir-anime.to (WordPress + Madara theme, anime VF/VOSTFR).
- * Runtime: isolated JS with global `fetchv2`. No Node.js, no DOM.
- * Evidence (2026-09-22, unauthenticated GET):
- *  - Search:  GET /?post_type=wp-manga&s={encodeURIComponent(query)} -> `div.tab-thumb`
- *             + `div.tab-summary` blocks. Thumb: a[href="/anime/{slug}/"]
- *             (+ img thumb_*); title: div.post-title h3 a; genres:
- *             div.post-content_item.mg_genres; latest: div.meta-item
- *             .latest-chap span.chapter a (episode URL); rating:
- *             div.meta-item.rating span.score.
- *  - Detail:  GET /anime/{slug}/ -> div.profile-manga, div.post-title h1,
- *             div.summary_image img (thumb), div.post-total-rating span.score,
- *             post-content_item Type/Status, div.genres-content a[href*=
- *             /anime-genre/], div.description-summary div.summary__content p,
- *             ul.main.version-chap li.wp-manga-chapter a[href="/anime/{slug}/
- *             {slug}-{NN}-(vostfr|vf)/"] + span.chapter-release-date.
- *             VF and VOSTFR are separate entries, e.g. "Titre" vs "Titre (VF)".
- *  - Episode: GET /anime/{slug}/{ep-slug}/ -> .chapter-type-video,
- *             select.host-select options (LECTEUR myTV / MOON / VOE / Stape),
- *             div.chapter-video-frame iframe (default host), inline
- *             `var thisChapterSources = {"HOST":"<iframe src=...>"}`
- *             (voembed.net, mfw09.org, voe.sx, streamtape.com), plus
- *             select.single-chapter-select options[data-redirect] listing
- *             all episodes (text = episode number, e.g. "14".."01").
- *  - This module does NOT bypass CAPTCHA / login / DRM: extractStreamUrl
- *    resolves declared host embeds live and only returns a direct mp4/m3u8
- *    after fetching it and verifying a non-HTML video payload; otherwise it
- *    returns the host embed URL(s) paired with playback headers.
+ * Source: https://voir-anime.to (verified active; voiranime.com = NXDOMAIN).
+ * Runtime: isolated JS with global `fetchv2`. No optional chaining, no
+ * nullish coalescing, no complex async — plain ES5-compatible syntax only.
+ * Headers: iPhone Safari UA as specified by module owner.
+ * Search route: /?s={query} (302 -> /?post_type=wp-manga&s={query};
+ * fetchHtml follows redirects manually so unfollowing runtimes still work).
+ * Card selectors (Madara theme, verified 2026-09-23):
+ *   - href: https://voir-anime.to/anime/{slug}/  (detail link)
+ *   - title: <h3 class="h4"><a>...</a></h3>  or title="..." attr on anchor
+ *   - image: <img src="..."> inside div.tab-thumb
+ * Detail: /anime/{slug}/ ; episodes: wp-manga-chapter list or chapter select.
+ * Does NOT bypass CAPTCHA / login / DRM.
  */
 
 var BASE_URL = 'https://voir-anime.to';
-var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
-var DEFAULT_HEADERS = { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7', Referer: BASE_URL + '/' };
-var MEDIA_HEADERS = { 'User-Agent': UA, Accept: '*/*', 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7', Referer: BASE_URL + '/', Origin: BASE_URL };
+var UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15';
+var DEFAULT_HEADERS = {
+  'User-Agent': UA,
+  Accept: 'text/html,application/xhtml+xml',
+  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7',
+  Referer: BASE_URL + '/'
+};
+var MEDIA_HEADERS = {
+  'User-Agent': UA,
+  Accept: '*/*',
+  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.7',
+  Referer: BASE_URL + '/',
+  Origin: BASE_URL
+};
 
 function httpFetch(url, options) {
   if (typeof fetchv2 !== 'undefined' && fetchv2) return fetchv2(url, options || {});
@@ -49,7 +45,6 @@ function toAbsolute(href) {
   return BASE_URL + '/' + h;
 }
 
-/* Read a fetchv2/fetch response as text, tolerating runtime differences. */
 async function readText(resp) {
   if (!resp) throw new Error('EMPTY_RESPONSE');
   if (typeof resp.text === 'function') return await resp.text();
@@ -64,15 +59,13 @@ async function readText(resp) {
   throw new Error('UNREADABLE_RESPONSE');
 }
 
-/* Read a response as JSON. Handles response.json as async method OR plain
- * value, then falls back to body / text parsing. Required by module rules. */
 async function readJson(resp) {
   if (!resp) throw new Error('EMPTY_RESPONSE');
   try {
     if (typeof resp.json === 'function') return await resp.json();
-  } catch (e) { /* fall through to body/text */ }
+  } catch (e) { /* fall through */ }
   if (resp.json != null && typeof resp.json === 'object') return resp.json;
-  if (typeof resp.body === 'object' && resp.body !== null) return resp.body;
+  if (resp.body != null && typeof resp.body === 'object') return resp.body;
   var raw = null;
   try {
     if (typeof resp.body === 'string' && resp.body) raw = resp.body;
@@ -82,6 +75,20 @@ async function readJson(resp) {
   throw new Error('UNREADABLE_JSON_RESPONSE');
 }
 
+function headerValue(headers, name) {
+  if (!headers) return null;
+  if (typeof headers.get === 'function') {
+    try { return headers.get(name); } catch (e) { return null; }
+  }
+  for (var k in headers) {
+    if (k && k.toLowerCase() === String(name).toLowerCase()) return headers[k];
+  }
+  return null;
+}
+
+/* Fetch HTML, manually following 3xx Location headers (up to 5 hops).
+ * Some runtimes' fetchv2 does not auto-follow redirects; /?s= returns
+ * 302 to /?post_type=wp-manga&s=, so this is required. */
 async function fetchHtml(url) {
   var current = url;
   for (var hop = 0; hop < 5; hop++) {
@@ -141,47 +148,20 @@ function pickImage(fragment) {
 
 function escRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-/* Generic anime-card parser. Covers search (`tab-thumb`/`tab-summary`),
- * home (`page-item-detail`/`item-thumb`) and archive pages. Detail URLs are
- * exactly /anime/{slug}/ — episode URLs (/anime/{slug}/{ep}/) are excluded. */
+/* Bulletproof anime-card parser. Matches absolute /anime/{slug}/ detail
+ * anchors (episode URLs /anime/{slug}/{ep}/ are excluded by the slug-only
+ * pattern). Forward-only context window captures title/img/rating/latest. */
 function parseAnimeCards(html) {
+  if (!html || typeof html !== 'string') return [];
   var out = [];
   var seen = {};
-  function pushCard(url, title, image, extra) {
-    if (!url || seen[url]) return;
-    seen[url] = true;
-    var t = (title && String(title).trim()) || null;
-    if (!t) {
-      var slug = String(url).split('/').filter(Boolean).pop() || '';
-      t = decodeEntities(slug.replace(/-/g, ' ')).replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-    }
-    var item = {
-      id: url, url: url, href: url,
-      title: t, name: t,
-      image: image || null, poster: image || null, thumbnail: image || null,
-      type: 'anime', kind: 'anime'
-    };
-    if (extra) {
-      if (extra.genre) { item.genre = extra.genre; }
-      if (extra.rating) { item.rating = extra.rating; }
-      if (extra.latest) { item.latest = extra.latest; }
-      var lang = detectLang(t + ' ' + url + ' ' + (extra.latest || ''));
-      if (lang) { item.lang = lang; item.audio = lang; }
-    } else {
-      var l = detectLang(t + ' ' + url);
-      if (l) { item.lang = l; item.audio = l; }
-    }
-    out.push(item);
-  }
   var base = escRe(BASE_URL);
   var re = new RegExp('<a[^>]*href="(' + base + '\\/anime\\/([a-z0-9\\-]+)\\/)"[^>]*>', 'g');
   var m;
   while ((m = re.exec(html))) {
     var url = m[1];
     if (seen[url]) continue;
-    /* Forward-only context: the card body (img, title, genres, rating)
-     * always follows its detail anchor; looking backwards leaks the
-     * previous card's latest-chap/rating into this card. */
+    seen[url] = true;
     var ctx = html.slice(m.index, Math.min(html.length, m.index + 4500));
     var title = null;
     var tm = m[0].match(/title="([^"]{1,220})"/);
@@ -191,22 +171,27 @@ function parseAnimeCards(html) {
       if (h) title = stripTags(h[1]);
     }
     if (!title) {
-      var h5 = ctx.match(/<h5[^>]*>([\s\S]{0,220}?)<\/h5>/);
-      if (h5) title = stripTags(h5[1]);
+      var slug = String(url).split('/').filter(Boolean).pop() || '';
+      title = decodeEntities(slug.replace(/-/g, ' ')).replace(/\b\w/g, function (c) { return c.toUpperCase(); });
     }
     if (!title || /^(EN COURS|Anime|Voiranime)$/i.test(title)) continue;
     var img = pickImage(ctx);
     var extra = {};
-    var gm = ctx.match(/mg_genres[\s\S]{0,600}?summary-content[^>]*>([\s\S]{0,600}?)<\/div>/);
-    if (gm) {
-      var gs = stripTags(gm[1]);
-      if (gs) extra.genre = gs.slice(0, 200);
-    }
     var rm = ctx.match(/post-total-rating[\s\S]{0,400}?<span class="score"[^>]*>([^<]{1,10})</);
     if (rm) extra.rating = stripTags(rm[1]);
     var cm = ctx.match(/latest-chap[\s\S]{0,600}?<a[^>]*href="([^"]+)"[^>]*>([\s\S]{0,160}?)<\/a>/);
     if (cm) extra.latest = stripTags(cm[2]);
-    pushCard(url, title, img, extra);
+    var item = {
+      id: url, url: url, href: url,
+      title: title, name: title,
+      image: img, poster: img, thumbnail: img,
+      type: 'anime', kind: 'anime'
+    };
+    if (extra.rating) item.rating = extra.rating;
+    if (extra.latest) item.latest = extra.latest;
+    var lang = detectLang(title + ' ' + url + ' ' + (extra.latest || ''));
+    if (lang) { item.lang = lang; item.audio = lang; }
+    out.push(item);
   }
   return out;
 }
@@ -283,8 +268,6 @@ function parseDetails(html, url) {
   };
 }
 
-/* Episode links from a detail page (wp-manga-chapter list). Episode numbers
- * and titles are kept exactly as published — never guessed or renumbered. */
 function parseEpisodesFromDetail(html, showUrl) {
   var out = [];
   var seen = {};
@@ -313,8 +296,6 @@ function parseEpisodesFromDetail(html, showUrl) {
   return out;
 }
 
-/* Episode links from an episode/watch page (chapter select). Same rule:
- * keep published labels and data-redirect URLs untouched. */
 function parseEpisodesFromWatch(html, showUrl) {
   var out = [];
   var seen = {};
@@ -324,8 +305,6 @@ function parseEpisodesFromWatch(html, showUrl) {
     var url = toAbsolute(decodeEntities(m[1]));
     if (!url || seen[url]) continue;
     if (url.indexOf('/anime/') < 0) continue;
-    /* Host-switch options (select.host-select) also carry data-redirect but
-     * point at "?host=LECTEUR ..." — never episode entries. */
     if (url.indexOf('?') >= 0 || /[?&]host=/i.test(url)) continue;
     seen[url] = true;
     var label = stripTags(m[2]);
@@ -360,8 +339,6 @@ function providerOf(embedUrl) {
   return 'embed';
 }
 
-/* Declared hosts on a watch page: thisChapterSources map + host-select
- * labels + default chapter-video-frame iframe. */
 function parsePlayers(html) {
   var players = [];
   var seen = {};
@@ -376,21 +353,12 @@ function parsePlayers(html) {
   }
   var srcMap = html.match(/var\s+thisChapterSources\s*=\s*(\{[\s\S]{0,8000}?\});/);
   if (srcMap) {
-    /* Raw map keeps \" escapes, so match iframe src directly without
-     * unescaping first (unescaping would break the " delimiters). */
     var raw = srcMap[1];
     var re = /"([^"]+)"\s*:\s*"<iframe[^>]*src=\\"((?:[^\\]|\\\/)+)\\"/g;
     var m;
     while ((m = re.exec(raw))) {
       push(decodeEntities(m[1]).trim(), decodeEntities(m[2]).replace(/\\\//g, '/'));
     }
-  }
-  var hostLabels = {};
-  var hre = /<option[^>]*value="([^"]+)"[^>]*>([^<]{0,80})<\/option>/g;
-  var hm;
-  while ((hm = hre.exec(html))) {
-    var v = decodeEntities(hm[1]).trim();
-    if (/^LECTEUR/i.test(v)) hostLabels[v] = true;
   }
   var fre = /<div[^>]*class="[^"]*chapter-video-frame[^"]*"[^>]*>([\s\S]{0,2000}?)<\/div>/;
   var fm = html.match(fre);
@@ -427,18 +395,6 @@ function findMediaUrls(html) {
   return found;
 }
 
-function headerValue(headers, name) {
-  if (!headers) return null;
-  if (typeof headers.get === 'function') {
-    try { return headers.get(name); } catch (e) { return null; }
-  }
-  for (var k in headers) {
-    if (k && k.toLowerCase() === String(name).toLowerCase()) return headers[k];
-  }
-  return null;
-}
-
-/* Verify a candidate is real media: reject HTML / empty / error payloads. */
 async function verifyMedia(url, headers) {
   var resp = await httpFetch(url, {
     method: 'GET',
@@ -475,21 +431,22 @@ function showUrlOf(episodeUrl) {
   return m ? m[1] : null;
 }
 
+/* Search: GET /?s={encoded query}. Site 302-redirects to
+ * /?post_type=wp-manga&s={query}; fetchHtml follows that manually.
+ * Empty query or any error returns [] — never throws. */
 globalThis.searchResults = async function (query) {
   try {
-    /* Madara search route: /?post_type=wp-manga&s={query} (direct 200).
-     * /?s={query} 302-redirects there — some runtimes do not follow
-     * redirects, yielding an empty body and zero results. */
     var q = String(query == null ? '' : query).trim().replace(/\s+/g, ' ');
     if (!q) return [];
-    var url = BASE_URL + '/?post_type=wp-manga&s=' + encodeURIComponent(q);
+    var url = BASE_URL + '/?s=' + encodeURIComponent(q);
     var html = null;
     for (var attempt = 0; attempt < 2; attempt++) {
       try { html = await fetchHtml(url); break; }
       catch (e) { if (attempt === 1) return []; }
     }
-    if (html == null) return [];
-    return parseAnimeCards(html) || [];
+    if (html == null || html === '') return [];
+    var cards = parseAnimeCards(html);
+    return cards || [];
   } catch (e) {
     return [];
   }
@@ -510,13 +467,12 @@ globalThis.extractEpisodes = async function (id) {
   try {
     var url = normalizeId(id);
     var show = showUrlOf(url);
-    /* Episode URL given: sibling list lives on the watch page select. */
     if (show && url.replace(/\/$/, '') !== show.replace(/\/$/, '')) {
       try {
         var wh = await fetchHtml(url);
         var fromSelect = parseEpisodesFromWatch(wh, show);
         if (fromSelect.length) return fromSelect;
-      } catch (e) { /* fall through to detail list */ }
+      } catch (e) { /* fall through */ }
       try {
         var dh = await fetchHtml(show);
         var fromDetail = parseEpisodesFromDetail(dh, show);
@@ -527,8 +483,7 @@ globalThis.extractEpisodes = async function (id) {
     var html = await fetchHtml(show || url);
     var episodes = parseEpisodesFromDetail(html, show || url);
     if (episodes.length) return episodes;
-    var watch = parseEpisodesFromWatch(html, show || url);
-    return watch;
+    return parseEpisodesFromWatch(html, show || url);
   } catch (e) {
     return [];
   }
@@ -542,9 +497,7 @@ globalThis.extractStreamUrl = async function (episodeHref, lang) {
   if (lang) {
     var l = String(lang).toLowerCase();
     var isVf = l.indexOf('vf') >= 0;
-    var isVostfr = l.indexOf('vostfr') >= 0 || l.indexOf('vost') >= 0;
-    /* Host labels carry no language; filter on the episode URL language so
-     * a VF request never returns a VOSTFR page's hosts and vice versa. */
+    var isVostfr = l.indexOf('vostr') >= 0 || l.indexOf('vost') >= 0;
     var epLang = detectLang(url);
     if ((isVf && epLang === 'VOSTFR') || (isVostfr && epLang === 'VF')) {
       var show = showUrlOf(url);
@@ -555,13 +508,12 @@ globalThis.extractStreamUrl = async function (episodeHref, lang) {
             return detectLang(e.url + ' ' + e.title) === (isVf ? 'VF' : 'VOSTFR');
           });
           if (alt.length) {
-            var altHtml = await fetchHtml(alt[0].url);
-            html = altHtml;
+            html = await fetchHtml(alt[0].url);
             url = alt[0].url;
             players = parsePlayers(html);
             wanted = players;
           }
-        } catch (e) { /* keep original page evidence */ }
+        } catch (e) { /* keep original */ }
       }
     }
     var matched = players.filter(function (p) { return p.label && p.label.toLowerCase().indexOf(l) >= 0; });
@@ -575,10 +527,6 @@ globalThis.extractStreamUrl = async function (episodeHref, lang) {
     }
   }
   candidates = declared.concat(candidates);
-
-  /* One level of dynamic resolution: host embeds are fetched and scanned
-   * for mp4/m3u8, then verified. Embed pages exposing no direct media are
-   * kept as playable embed streams with headers (no bypass involved). */
   var embeds = candidates.filter(function (c) { return c.via === 'iframe' || (c.via && c.via.indexOf('host:') === 0); }).slice(0, 5);
   for (var i = 0; i < embeds.length; i++) {
     try {
@@ -587,14 +535,13 @@ globalThis.extractStreamUrl = async function (episodeHref, lang) {
       for (var j = 0; j < inner.length; j++) {
         if (inner[j].via !== 'iframe') candidates.push(inner[j]);
       }
-    } catch (e) { /* embed unreadable: keep evidence, try next */ }
+    } catch (e) { /* keep evidence */ }
   }
-
   var direct = candidates.filter(function (c) { return c.via !== 'iframe'; });
   var errors = [];
   for (var k = 0; k < direct.length; k++) {
     var c = direct[k];
-    if (c.via && c.via.indexOf('host:') === 0) continue; /* verified below as embeds */
+    if (c.via && c.via.indexOf('host:') === 0) continue;
     var headers = Object.assign({}, MEDIA_HEADERS, { Referer: url });
     try {
       var info = await verifyMedia(c.url, headers);
@@ -609,7 +556,6 @@ globalThis.extractStreamUrl = async function (episodeHref, lang) {
       };
     } catch (e) { errors.push(e && e.message ? e.message : String(e)); }
   }
-
   var embedStreams = declared.map(function (c) {
     return {
       label: c.label || providerOf(c.url),
@@ -619,24 +565,11 @@ globalThis.extractStreamUrl = async function (episodeHref, lang) {
     };
   });
   if (embedStreams.length) return { streams: embedStreams, subtitles: [] };
-
   if (!direct.length) {
-    throw new Error(
-      'STREAM_GATED: no player embed is exposed on ' + url +
-      ' (declared hosts: ' + JSON.stringify(players.map(function (p) { return p.label + '@' + p.provider; })) +
-      '). Playback requires the site player and was not bypassed.' +
-      (errors.length ? ' Checks: ' + errors.join(' | ') : '')
-    );
+    throw new Error('STREAM_GATED: no playable media on ' + url);
   }
-  throw new Error(
-    'STREAM_GATED: all ' + direct.length + ' candidate(s) on ' + url +
-    ' failed verification (declared hosts: ' + JSON.stringify(players.map(function (p) { return p.label + '@' + p.provider; })) +
-    '). Playback requires the site player and was not bypassed.' +
-    (errors.length ? ' Checks: ' + errors.join(' | ') : '')
-  );
+  throw new Error('STREAM_GATED: all candidates failed on ' + url);
 };
-
-/* ---- Discovery (supported: static listing pages, no login) ---- */
 
 var DISCOVERY_SECTIONS = [
   { id: 'en-cours', title: 'En cours', url: BASE_URL + '/' },
@@ -650,10 +583,9 @@ globalThis.discoveryHome = async function () {
       var s = DISCOVERY_SECTIONS[i];
       try {
         var html = await fetchHtml(s.url);
-        var items = parseAnimeCards(html).slice(0, 30);
-        sections.push({ id: s.id, title: s.title, items: items });
+        sections.push({ id: s.id, title: s.title, items: parseAnimeCards(html).slice(0, 30) });
       } catch (e) {
-        sections.push({ id: s.id, title: s.title, items: [], error: e && e.message ? e.message : String(e) });
+        sections.push({ id: s.id, title: s.title, items: [] });
       }
     }
     var anyItems = false;
@@ -666,8 +598,6 @@ globalThis.discoveryHome = async function () {
   }
 };
 
-/* Alias entry point used by some Synthetiq Player home listings.
- * Returns a flat item array and never throws (empty array on error). */
 globalThis.getHome = async function () {
   try {
     var sections = await globalThis.discoveryHome();
