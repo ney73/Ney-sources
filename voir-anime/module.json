@@ -1,31 +1,8 @@
 {
   "id": "voir-anime",
   "name": "VoirAnime",
-  "contentType": "video",
-  "contractVersion": 3,
-  "releaseTrack": "stable",
-  "moduleVersion": "1.0.0",
   "version": "1.0.0",
   "versionCode": 1,
-  "moduleFamilyId": "voir_anime",
-  "moduleIdentity": "SP-VID-VOIR-ANIME",
-  "moduleIdentityNumber": 3,
-  "description": "Video module for https://voir-anime.to (anime VF / VOSTFR). Search, details and episodes via public HTML; multi-host player embeds (myTV/voembed, MOON, VOE, Stape/streamtape) resolved dynamically without bypassing CAPTCHA/logins.",
-  "language": "fr",
-  "config": {
-    "baseUrl": "https://voir-anime.to",
-    "runtime": {
-      "entry": "index.js",
-      "mode": "local"
-    },
-    "caps": {
-      "homeMaxResults": 30,
-      "maxResponseBytes": 524288,
-      "timeoutMs": 15000,
-      "maxConcurrentRequests": 4
-    },
-    "capabilities": {
-      "discovery_v1": true
-    }
-  }
+  "type": "video",
+  "description": "Streaming d'anime via VoirAnime"
 }
