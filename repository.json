@@ -5,6 +5,8 @@
   "schemaVersion": 1,
   "manifestVersion": 1,
   "minAppVersion": 1,
+  "contractVersion": 3,
+  "publishedAtMs": 1789903651759,
   "modules": [
     {
       "id": "voir-anime",
@@ -14,6 +16,9 @@
       "schemaVersion": 1,
       "manifestVersion": 1,
       "minAppVersion": 1,
+      "contractVersion": 3,
+      "moduleIdentityNumber": 3,
+      "publishedAtMs": 1789903651759,
       "type": "video",
       "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime.zip"
     }
