@@ -7,6 +7,11 @@
   "minAppVersion": 1,
   "contractVersion": 3,
   "publishedAtMs": 1789903651759,
+  "author": {
+    "name": "ney73"
+  },
+  "metadata": {},
+  "settings": {},
   "modules": [
     {
       "id": "voir-anime",
@@ -20,6 +25,29 @@
       "moduleIdentityNumber": 3,
       "publishedAtMs": 1789903651759,
       "type": "video",
+      "author": {
+        "name": "ney73"
+      },
+      "metadata": {},
+      "settings": {},
+      "capabilities": {
+        "discovery_v1": true
+      },
+      "manifest": {
+        "url": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime/module.json",
+        "path": "voir-anime/module.json",
+        "entry": "index.js"
+      },
+      "presentation": {
+        "category": "Anime",
+        "purpose": "Anime VF / VOSTFR",
+        "language": "French",
+        "languages": [
+          "vf",
+          "vostfr"
+        ],
+        "iconUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime/icon.png"
+      },
       "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime.zip"
     }
   ]
