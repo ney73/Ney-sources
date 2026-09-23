@@ -1,46 +1,21 @@
 {
-  "schemaVersion": 1,
   "name": "Ney Sources",
-  "id": "ney-sources",
-  "description": "Custom sources repository for Synthetiq Player",
   "modules": [
-    {
-      "id": "zenix-stream",
-      "name": "Zenix",
-      "version": "1.0.0",
-      "versionCode": 1,
-      "minAppVersion": "1.0.0",
-      "author": "ney73",
-      "description": "Zenix video source module (films and series from zenix.best; no anime catalogue on source)",
-      "type": "video",
-      "icon": "https://raw.githubusercontent.com/ney73/Ney-sources/main/zenix-stream/icon.png",
-      "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/zenix-stream.zip",
-      "manifestUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/zenix-stream/module.json",
-      "capabilities": {
-        "discovery_v1": true
-      },
-      "changelog": [
-        "1.0.0: migrated source from senpai-stream.space to zenix.best. zenix-card parsing, provider-link resolution, no anime catalogue on source."
-      ]
-    },
     {
       "id": "voir-anime",
       "name": "VoirAnime",
       "version": "1.0.0",
       "versionCode": 1,
-      "minAppVersion": "1.0.0",
-      "author": "ney73",
-      "description": "VoirAnime video source module (anime VF/VOSTFR from voir-anime.to; multi-host embeds resolved dynamically)",
       "type": "video",
-      "icon": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime/icon.png",
-      "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime.zip",
-      "manifestUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime/module.json",
-      "capabilities": {
-        "discovery_v1": true
-      },
-      "changelog": [
-        "1.0.0: initial release. Search (/?s=), details, episodes and multi-host streams (myTV/voembed, MOON, VOE, Stape) via public HTML with live media verification, no CAPTCHA/login bypass."
-      ]
+      "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime.zip"
+    },
+    {
+      "id": "zenix-stream",
+      "name": "Zenix",
+      "version": "1.0.0",
+      "versionCode": 1,
+      "type": "video",
+      "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/zenix-stream.zip"
     }
   ]
 }
