@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "versionCode": 1,
   "schemaVersion": 1,
+  "manifestVersion": 1,
+  "minAppVersion": 1,
   "modules": [
     {
       "id": "voir-anime",
       "name": "VoirAnime",
       "version": "1.0.0",
       "versionCode": 1,
+      "schemaVersion": 1,
+      "manifestVersion": 1,
+      "minAppVersion": 1,
       "type": "video",
       "downloadUrl": "https://raw.githubusercontent.com/ney73/Ney-sources/main/voir-anime.zip"
     }
