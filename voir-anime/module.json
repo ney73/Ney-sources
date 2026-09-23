@@ -14,6 +14,12 @@
   "moduleFamilyId": "voir_anime",
   "moduleIdentity": "SP-VID-VOIR-ANIME",
   "moduleIdentityNumber": 3,
+  "author": {
+    "name": "ney73"
+  },
+  "metadata": {},
+  "settings": {},
+  "headers": {},
   "description": "Streaming d'anime via VoirAnime",
   "language": "fr",
   "config": {
