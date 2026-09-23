@@ -4,7 +4,7 @@
  * Source: https://voir-anime.to (WordPress + Madara theme, anime VF/VOSTFR).
  * Runtime: isolated JS with global `fetchv2`. No Node.js, no DOM.
  * Evidence (2026-09-22, unauthenticated GET):
- *  - Search:  GET /?s={encodeURIComponent(query)} -> `div.tab-thumb`
+ *  - Search:  GET /?post_type=wp-manga&s={encodeURIComponent(query)} -> `div.tab-thumb`
  *             + `div.tab-summary` blocks. Thumb: a[href="/anime/{slug}/"]
  *             (+ img thumb_*); title: div.post-title h3 a; genres:
  *             div.post-content_item.mg_genres; latest: div.meta-item
@@ -83,13 +83,23 @@ async function readJson(resp) {
 }
 
 async function fetchHtml(url) {
-  var resp = await httpFetch(url, { method: 'GET', headers: DEFAULT_HEADERS });
-  var status = resp != null && resp.status != null ? resp.status : 200;
-  if (status === 404) throw new Error('NOT_FOUND: ' + url);
-  if (status < 200 || status >= 400) throw new Error('HTTP_' + status + ': ' + url);
-  var html = await readText(resp);
-  if (!html || !html.length) throw new Error('EMPTY_HTML: ' + url);
-  return html;
+  var current = url;
+  for (var hop = 0; hop < 5; hop++) {
+    var resp = await httpFetch(current, { method: 'GET', headers: DEFAULT_HEADERS });
+    var status = resp != null && resp.status != null ? resp.status : 200;
+    if (status === 404) throw new Error('NOT_FOUND: ' + current);
+    if (status >= 300 && status < 400) {
+      var loc = headerValue(resp.headers, 'location');
+      if (!loc) break;
+      current = toAbsolute(loc);
+      continue;
+    }
+    if (status < 200 || status >= 400) throw new Error('HTTP_' + status + ': ' + current);
+    var html = await readText(resp);
+    if (!html || !html.length) throw new Error('EMPTY_HTML: ' + current);
+    return html;
+  }
+  throw new Error('HTTP_REDIRECT_LOOP: ' + url);
 }
 
 function decodeEntities(s) {
@@ -467,11 +477,12 @@ function showUrlOf(episodeUrl) {
 
 globalThis.searchResults = async function (query) {
   try {
-    /* Site search is a GET route: /?s={query} (declared in the Yoast
-     * SearchAction schema as /?s={search_term_string}). */
+    /* Madara search route: /?post_type=wp-manga&s={query} (direct 200).
+     * /?s={query} 302-redirects there — some runtimes do not follow
+     * redirects, yielding an empty body and zero results. */
     var q = String(query == null ? '' : query).trim().replace(/\s+/g, ' ');
     if (!q) return [];
-    var url = BASE_URL + '/?s=' + encodeURIComponent(q);
+    var url = BASE_URL + '/?post_type=wp-manga&s=' + encodeURIComponent(q);
     var html = null;
     for (var attempt = 0; attempt < 2; attempt++) {
       try { html = await fetchHtml(url); break; }
