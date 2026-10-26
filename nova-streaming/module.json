@@ -1,0 +1,40 @@
+{
+  "id": "nova-streaming",
+  "name": "Nova Streaming",
+  "contentType": "video",
+  "type": "video",
+  "contractVersion": 3,
+  "releaseTrack": "stable",
+  "moduleVersion": "1.0.0",
+  "version": "1.0.0",
+  "versionCode": 1,
+  "schemaVersion": 1,
+  "manifestVersion": 1,
+  "minAppVersion": 1,
+  "moduleFamilyId": "nova_streaming",
+  "moduleIdentity": "SP-VID-NOVA-STREAMING",
+  "author": {
+    "name": "ney73"
+  },
+  "metadata": {},
+  "settings": {},
+  "headers": {},
+  "description": "Films et séries via watchnova.win (NOVA). Catalogue, recherche, fiches et épisodes via les routes publiques du site. Flux uqload résolus en HLS réel (master + qualités vérifiées) ; les autres hébergeurs restent en embed, sans contournement de login, DRM ou CAPTCHA.",
+  "language": "fr",
+  "config": {
+    "baseUrl": "https://watchnova.win",
+    "runtime": {
+      "entry": "index.js",
+      "mode": "local"
+    },
+    "caps": {
+      "homeMaxResults": 30,
+      "maxResponseBytes": 4194304,
+      "timeoutMs": 20000,
+      "maxConcurrentRequests": 4
+    },
+    "capabilities": {
+      "discovery_v1": true
+    }
+  }
+}
